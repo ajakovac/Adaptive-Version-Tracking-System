@@ -1,0 +1,9 @@
+# text file to be processed with AVTS
+
+This part of the text is independent on the version tracking, it will appear in all versions
+# AVTS{id0}
+
+This is the code that will appear in the 'id0' version. It contains a particular information about Visual Studio Code: with Alt + Z we can toggle between wrapping and unwrapping modes.
+
+# AVTS{id0}
+This line is again always visible.
