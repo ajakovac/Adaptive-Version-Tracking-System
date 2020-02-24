@@ -8,13 +8,14 @@ The solution should be a system, where all details, and all level formulations a
 This project starts with the simple application AVTS.py. This code works with two files, an input file and a master file. The input file can be any text file (including documentations, program codes, etc.) containing AVTS switches, which define and tag 
 blocks of the input file. The master file determines whether these blocks appear in the output or not.
 
-Usage:
-AVTS.py <swiches> inputfile <master file>
+# Usage:
+
+AVTS.py \<swiches\> inputfile \<master file\>
 
 available switches:
+
 -help : prints this helptext
--save_update : if there are tags in the input file that are missing
-        from the master file, updates the master file accordingly
-        The new items are as default unvisible
+
+-save_update : if there are tags in the input file that are missing from the master file, updates the master file accordingly. The new items are as default unvisible.
 
 The input file is compulsory. The default for the master file is the input file core (without extension) followed by "\_AVTMaster".
