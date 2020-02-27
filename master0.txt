@@ -1,4 +1,4 @@
 # AVTS master file
 
-id0:1
+id0 = True
 
