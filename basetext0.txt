@@ -1,9 +1,10 @@
 # text file to be processed with AVTS
+#AVTS def x=True "trial variable"
 
 This part of the text is independent on the version tracking, it will appear in all versions
-# AVTS begin{id0}
+# AVTS context x, redText, remarkText
 
 This is the code that will appear in the 'id0' version. It contains a particular information about Visual Studio Code: with Alt + Z we can toggle between wrapping and unwrapping modes.
 
-# AVTS end
+#AVTS recover
 This line is again always visible.
