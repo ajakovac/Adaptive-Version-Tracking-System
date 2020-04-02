@@ -26,6 +26,10 @@ restores the last environment from the stack
 resets the environment stack, and takes the basic environment.
 The defined user variables can be set in the command line as well as in a master file.
 
+\033[3m# AVTS replace\033[m: 
+replaces the variable with its value transformed to string.
+The defined user variables can be set in the command line as well as in a master file.
+
 \033[1mUsage\033[m:
 \033[3mAVTS.py <swiches> inputfile\033[m,
 
@@ -45,105 +49,153 @@ import re
 import os.path
 import copy
 
+# the basic plain Environment class
+# printline should be implemented in subclasses
+# startContext/endContext will be executed when a new context is
+# started/ended (context itself can change this function)
+class Environment :
+    visible = True
+    def print(self, line) :
+        if self.visible:
+            self.printline(line)
+    def printline(self, line) :
+        print(line, end = '')
+    def NoneOutput(self) :
+        return None
+    startContext = NoneOutput
+    endContext = NoneOutput
+
+    
+
+# TextEnvironment:
 # cf. https://en.wikipedia.org/wiki/ANSI_escape_code
-# these are the environment modifying contexts
-def setcolor(r,g,b) :
-    return u"\033[38;2;" + str(r) + ";" + str(g) + ";" + str(b) + "m"
-
-def setbgcolor(r,g,b) :
-    return u"\033[48;2;" + str(r) + ";" + str(g) + ";" + str(b) + "m"
-
 class ANSIcode :
     reset = u"\033[m"
     bold = u"\033[1m"
     italic = u"\033[3m"
     underline = u"\033[4m"
     clear = u"\033[2J"
-
-# the current lines are printed according to the actual Environment
-class Environment :
-    visible = True
+    
+class TextEnvironment(Environment) :
     indent = ""
     modline = ""
-    color = setcolor(0,0,0)
-    def str(self) :
-        return(self.modline)
-    def print(self, line) :
-        if self.visible : 
-            print(self.indent + self.modline + self.color + line + ANSIcode.reset, end='')
+    color = ""
+    bgcolor = ""
+    endline = ANSIcode.reset
+    def printline(self, line) :
+        print(self.bgcolor + self.color, end='')
+        print(self.indent + self.modline, end='')
+        print(line + self.endline, end='')
 
-def mainTextcommand(env_in) :
-    return Environment()
+def Textsetcolor(r,g,b) :
+    return u"\033[38;2;" + str(r) + ";" + str(g) + ";" + str(b) + "m"
 
-mainText = lambda env : mainTextcommand(env)
+def Textsetbgcolor(r,g,b) :
+    return u"\033[48;2;" + str(r) + ";" + str(g) + ";" + str(b) + "m"
+
 
 def remarkTextcommand(env_in) :
     env = copy.copy(env_in)
     env.modline = ANSIcode.italic
-    env.color = setcolor(120,120,120)
-    env.indent = "   "
+    env.color = Textsetcolor(120,120,120)
+    env.indent = ">>>   "
     return env
 
 remarkText = lambda env : remarkTextcommand(env)
 
 def redTextcommand(env_in) :
     env = copy.copy(env_in)
-    env.color = setcolor(255,0,0)
+    env.color = Textsetcolor(255,0,0)
     return env
 
 redText = lambda env : redTextcommand(env)
 
 
+def verboseOutputStart() :
+    print(">>> Start context")
+
+def verboseOutputEnd() :
+    print(">>> End context")
+
+def NoneOutput() :
+    return None
+
+def verboseTextcommand(env_in) :
+    env = copy.copy(env_in)
+    env.startContext = verboseOutputStart
+    env.endContext = verboseOutputEnd
+    return env
+
+verboseText = lambda env : verboseTextcommand(env)
+
+class LaTeXEnvironment(Environment) :
+    def printline(self, line) :
+        print(line, end = '')
+
+# --------------------------------------------------------------------
 # here starts the AVTS command parser
+# --------------------------------------------------------------------
+
+# global variable: the environment stack
+stack = []
+
+# the variable dictionary contains a single element for current visibility
 dict ={"current" : "gives the visibility of the current environment"}
 current =True
-basicEnvironment = Environment()
-current = basicEnvironment.visible  # the current environment
-stack = [basicEnvironment]
 
 # interprets the current line as AVTS command.
 # if it is not AVTS command, returns False
 def AVTSinterpreter(line) :
     global stack
-    AVTSdef = r'(#|//)?\s*AVTS\s+def\s+((\w+)\s*=\s*([\w\s]+))(\s+"([^"]*)\s*")?$'
-    m = re.match(AVTSdef, line)
-    if m : # it is a definition
-        if m.group(3) not in dict :
-            dict.update( { m.group(3) : m.group(6)})
-            return m.group(2)
+    AVTScommand = r'(.*)(#|//|%)\s*AVTS\s+(\w+)\s+(.*)$'
+    m = re.match(AVTScommand, line)
+    if not m :  # not AVTS command: use current environment to print line
+        env = stack[-1]
+        env.print(line)
+        return ""
+    if m.group(1) != '' :
+        stack[-1].print( m.group(1) )
+    if m.group(3) == 'def' : # it is a definition
+        m1 = re.match(r'((\w+)\s*=\s*([\w\s]+))(\s+"([^"]*)\s*")?$', m.group(4))
+        if m1.group(2) not in dict :
+            dict.update( { m1.group(2) : m1.group(5)})
+            return m1.group(1)
         else :
-            dict[m.group(3)] = m.group(6)
+            dict[m1.group(2)] = m1.group(5)
             return ""
-    AVTScontext = r'(#|//)?\s*AVTS\s+context\s+([^,]+)((,[^,]+)*)$'
-    m = re.match(AVTScontext, line)
-    if m : # context change command
+    if m.group(3) == 'context' :
+        m1 = re.match(r'([^,]+)((,[^,]+)*)$', m.group(4))
         env = copy.copy(stack[-1])  # current environment is the last in the stack
-        commands = m.group(3).split(',')[1:] # read out contexts
+        commands = m1.group(2).split(',')[1:] # read out contexts
         commands.reverse()
         for c in commands :
             env = eval(c)(env)
-        env.visible = eval(m.group(2))
+        env.visible = eval(m1.group(1))
         current = env.visible
         stack.append(env)
+        env.startContext()
         return ""
-    AVTSrecover = r'(#|//)?\s*AVTS\s+recover\s*$'
-    m = re.match(AVTSrecover, line)
-    if m :
-        stack.pop()
+    if m.group(3) == 'recover' :
+        env = stack[-1]
+        env.endContext()
+        if(len(stack) > 1) : stack.pop()
         env = stack[-1]
         current = env.visible
         return ""
-    AVTSreset = r'(#|//)?\s*AVTS\s+reset\s*$'
-    m = re.match(AVTSreset, line)
-    if m :
-        env = stack[0]
-        stack = [basicEnvironment]
+    if m.group(3) == 'reset' :
+        while len(stack) > 1 :
+            env = stack[-1]
+            env.endContext()
+            stack.pop()
+        env = stack[-1]
         current = env.visible
         return ""
-    # not AVTS command: to be printed
-    env = stack[-1]
-    env.print(line)
-    return ""
+    if m.group(3) == 'replace' :
+        env = stack[-1]
+        env.print( str(eval(m.group(4))))
+        return ""
+    # if the line is AVTS command, but not interpretable:
+    raise SyntaxError("in", line)
 
 
 sys.argv.pop(0)  # the filename
@@ -191,7 +243,8 @@ while (sys.argv[0])[0] == '-' :
     m = re.match(r"-D", opt)
     if m :  # found a variable to be defined
         opt = sys.argv.pop(0)
-        m = re.match(r"((\w+)=(\w+))", opt)
+        m = re.match(r"((\w+)=([a-zA-Z0-9\" ]+))", opt)
+        #print(opt, m.groups(), file = sys.stderr)
         toexec = toexec + m.group(1) +"\n"  # we treat each line as a python command!
         if m.group(2) not in dict :
             dict.update({m.group(2) : "command line defined variable"})
@@ -200,6 +253,11 @@ while (sys.argv[0])[0] == '-' :
     exit(-1)
 
 exec(toexec)
+
+# here starts the evaluation of the actual file
+basicEnvironment = TextEnvironment()
+current = basicEnvironment.visible  # the current environment
+stack.append(basicEnvironment)
 
 # end of switches: input file must come
 inputfile = sys.argv.pop(0)
