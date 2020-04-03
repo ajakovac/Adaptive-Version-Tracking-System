@@ -3,11 +3,11 @@
 
 This part of the text is independent on the version tracking, it will appear in all versions
 
-The value of variable x in this run is 'x = #AVTS context True, redText
+The value of variable x in this run is 'x = #AVTS context True, red
 #AVTS replace x
 #AVTS recover
 '
-# AVTS context x, redText, remarkText
+# AVTS context x==True, red, remark
 This is the code that will appear in the 'x=True' version. It contains a particular information about Visual Studio Code: with Alt + Z we can toggle between wrapping and unwrapping modes.
 #AVTS recover
 This line is again always visible.
