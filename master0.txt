@@ -1,4 +1,0 @@
-# AVTS master file
-
-id0 = True
-
