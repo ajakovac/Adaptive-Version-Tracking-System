@@ -1,0 +1,13 @@
+|#AVTS def x = 20; begin True, replaceSpaces  #|
+alma $%<<!10+5!>> almakk
+
+$%<<!x*x!>>
+
+|#AVTS begin True, red, remark#|
+Leellenőrizve:
+|#AVTS end #|
+eval: hosszú és rövid is
+AVTS: üres avts
+AVTS def: sima "x = 20"
+AVTS def, utána begin
+|#AVTS end #|

@@ -13,6 +13,23 @@ class Environment :
         return None
     startContext = NoneOutput
     endContext = NoneOutput
+    beginLine = NoneOutput
+
+    # Tokens: (must be regex compatible!!)
+    AVTSStartToken = "\$\(" # a ' ' should be placed after the startToken
+    AVTSEndToken = "\)\$" # any character can follow: eg: "##alma" is valid
+    
+    evalMarker = "\$\%" #must be written in the same word as the variable name: eg: $%x
+    evalBeginMarker = "{"
+    evalEndMarker = "}"
+
+    # AVTS tokens:
+    beginToken = "begin"
+    recoverToken = "end"
+    defToken = "def"
+    resetToken = "reset"
+    sepToken = ";"
+
 
 class EnvironmentSkin:
     commands = dict()

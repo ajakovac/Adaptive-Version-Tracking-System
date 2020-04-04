@@ -17,10 +17,12 @@ class TextEnvironment(Environment) :
     color = ""
     bgcolor = ""
     endline = ANSIcode.reset
+    sep = " "
+    beginLine = lambda self: self.print(self.indent)
     def printline(self, line) :
         print(self.bgcolor + self.color, end='')
-        print(self.indent + self.modline, end='')
-        print(line + self.endline, end='')
+        print(self.modline, end='')
+        print(line.replace(" ", self.sep) + self.endline, end='')
 
 def setcolor(r,g,b) :
     return u"\033[38;2;" + str(r) + ";" + str(g) + ";" + str(b) + "m"
@@ -40,6 +42,11 @@ def remark(env_in) :
 def red(env_in) :
     env = copy.copy(env_in)
     env.color = setcolor(255,0,0)
+    return env
+
+def replaceSpaces(env_in) :
+    env = copy.copy(env_in)
+    env.sep = "_"
     return env
 
 #red = lambda env : redcommand(env)
@@ -65,4 +72,5 @@ def defaultSkin():
     defaultSkinvar.setCommand("remark", remark)
     defaultSkinvar.setCommand("verbose", verbose)
     defaultSkinvar.setCommand("red", red)
+    defaultSkinvar.setCommand("replaceSpaces", replaceSpaces)
     return defaultSkinvar
